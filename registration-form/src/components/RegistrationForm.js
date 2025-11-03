@@ -1,31 +1,47 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function RegistrationForm() {
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
-    token: "",
+    tinkoff_token: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form data:", formData);
-    alert(`Registration successful, ${formData.name}!`);
+    setLoading(true);
+    setError("");
+
+    try {
+      await register(formData);
+      alert("Registration successful! Please log in.");
+      navigate("/login");
+    } catch (error) {
+      setError(error.response?.data?.detail || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        {/* Decorative Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,8 +52,13 @@ export default function RegistrationForm() {
           <p className="text-gray-600">Create your account to get started</p>
         </div>
 
-        {/* Form Card */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div className="relative">
@@ -48,10 +69,10 @@ export default function RegistrationForm() {
                 </div>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="username"
+                  value={formData.username}
                   onChange={handleChange}
-                  placeholder="Full name"
+                  placeholder="Username"
                   required
                   className="w-full pl-10 pr-4 py-3 bg-white/50 border border-gray-200 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                 />
@@ -99,36 +120,22 @@ export default function RegistrationForm() {
                 </div>
                 <input
                   type="text"
-                  name="token"
-                  value={formData.token}
+                  name="tinkoff_token"
+                  value={formData.tinkoff_token}
                   onChange={handleChange}
-                  placeholder="Access token"
+                  placeholder="Tinkoff Investment Token"
                   required
                   className="w-full pl-10 pr-4 py-3 bg-white/50 border border-gray-200 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
             </div>
 
-            <div className="flex items-center">
-              <input
-                id="terms"
-                type="checkbox"
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                required
-              />
-              <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
-                I agree to the{" "}
-                <a href="#" className="text-purple-600 hover:text-purple-700 font-medium">
-                  Terms and Conditions
-                </a>
-              </label>
-            </div>
-
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Create Account
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
 
             <div className="text-center text-sm text-gray-600 pt-4 border-t border-gray-200">
