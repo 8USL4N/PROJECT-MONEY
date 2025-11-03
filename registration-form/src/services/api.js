@@ -1,92 +1,62 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
-  timeout: 10000, // 10 second timeout
+  withCredentials: true, // Отправлять cookies (сессия)
+  timeout: 10000,
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
-    return config;
-  },
-  (error) => {
-    console.error('Request error:', error);
-    return Promise.reject(error);
-  }
-);
+// Логи для разработки
+api.interceptors.request.use(config => {
+  console.log(`→ ${config.method?.toUpperCase()} ${config.url}`);
+  return config;
+});
 
-// Response interceptor with better error handling
 api.interceptors.response.use(
   (response) => {
-    console.log(`Response received:`, response.status);
+    console.log(`← ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
-    console.error('API Error:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url
-    });
-
-    if (error.code === 'ECONNREFUSED') {
-      console.error('Backend server is not running. Please start the FastAPI server.');
-      return Promise.reject(new Error('Cannot connect to server. Please make sure the backend is running.'));
-    }
-
-    if (error.response?.status === 401) {
-      // Remove invalid token
-      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      window.location.href = '/login';
-    }
-
+    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
 
-// Auth API
+// === АУТЕНТИФИКАЦИЯ ===
 export const authAPI = {
-  login: (email, password) => 
+  login: (email, password) =>
     api.post('/auth/login', { email, password }),
-  
-  register: (userData) => 
+
+  register: (userData) =>
     api.post('/auth/register', userData),
-  
-  logout: () => 
+
+  logout: () =>
     api.post('/auth/logout'),
-  
-  getMe: () => 
-    api.get('/auth/me'),
+
+  getMe: () =>
+    api.get('/auth/me'), // Возвращает { id, username, email }
 };
 
-// Market API
+// === ТОРГОВЛЯ ===
+export const tradeAPI = {
+  getPortfolio: () => api.get('/trade/portfolio'),
+  executeOrder: (orderData) => api.post('/trade/execute', orderData),
+};
+
+// === РЫНОК ===
 export const marketAPI = {
   loadCandles: (figi, days = 1) =>
     api.get(`/market/candles/${figi}?days=${days}`),
 };
 
-// Trade API
-export const tradeAPI = {
-  executeOrder: (orderData) =>
-    api.post('/trade/execute', orderData),
-  
-  getPortfolio: () =>
-    api.get('/trade/portfolio'),
-};
-
-// Model API
+// === МОДЕЛИ И БЭКТЕСТ (если нужны) ===
 export const modelAPI = {
-  trainSVR: () =>
-    api.post('/model/train/svr'),
+  trainSVR: () => api.post('/model/train/svr'),
 };
 
-// Backtest API
 export const backtestAPI = {
   runBacktest: (prices, predictions) =>
     api.post('/backtest/', { prices, predictions }),

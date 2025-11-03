@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authAPI } from '../services/api';
 
@@ -8,7 +9,6 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,14 +18,9 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      console.log('Checking authentication...');
       const response = await authAPI.getMe();
       setCurrentUser(response.data);
-      setIsAuthenticated(true);
-      console.log('User authenticated:', response.data);
     } catch (error) {
-      console.log('Authentication check failed:', error.message);
-      setIsAuthenticated(false);
       setCurrentUser(null);
     } finally {
       setLoading(false);
@@ -33,60 +28,38 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
-    try {
-      console.log('Attempting login for:', email);
-      const response = await authAPI.login(email, password);
-      setCurrentUser(response.data.user);
-      setIsAuthenticated(true);
-      console.log('Login successful:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Login error:', error);
-      const errorMessage = error.response?.data?.detail || 
-                          error.message || 
-                          'Login failed. Please check your credentials.';
-      throw new Error(errorMessage);
-    }
+    const response = await authAPI.login(email, password);
+    setCurrentUser(response.data);
+    return response.data;
   };
 
   const register = async (userData) => {
-    try {
-      console.log('Attempting registration:', userData);
-      const response = await authAPI.register(userData);
-      console.log('Registration successful:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.detail || 
-                          error.message || 
-                          'Registration failed. Please try again.';
-      throw new Error(errorMessage);
-    }
+    const response = await authAPI.register(userData);
+    return response.data;
   };
 
   const logout = async () => {
     try {
       await authAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch (err) {
+      console.error('Logout failed');
     } finally {
-      setIsAuthenticated(false);
       setCurrentUser(null);
     }
   };
 
   const value = {
-    isAuthenticated,
     currentUser,
     login,
     register,
     logout,
-    loading
+    loading,
+    isAuthenticated: !!currentUser,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
