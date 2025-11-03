@@ -18,10 +18,13 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
+      console.log('Checking authentication...');
       const response = await authAPI.getMe();
       setCurrentUser(response.data);
       setIsAuthenticated(true);
+      console.log('User authenticated:', response.data);
     } catch (error) {
+      console.log('Authentication check failed:', error.message);
       setIsAuthenticated(false);
       setCurrentUser(null);
     } finally {
@@ -30,21 +33,46 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
-    const response = await authAPI.login(email, password);
-    setCurrentUser(response.data.user);
-    setIsAuthenticated(true);
-    return response.data;
+    try {
+      console.log('Attempting login for:', email);
+      const response = await authAPI.login(email, password);
+      setCurrentUser(response.data.user);
+      setIsAuthenticated(true);
+      console.log('Login successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Login error:', error);
+      const errorMessage = error.response?.data?.detail || 
+                          error.message || 
+                          'Login failed. Please check your credentials.';
+      throw new Error(errorMessage);
+    }
   };
 
   const register = async (userData) => {
-    const response = await authAPI.register(userData);
-    return response.data;
+    try {
+      console.log('Attempting registration:', userData);
+      const response = await authAPI.register(userData);
+      console.log('Registration successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.detail || 
+                          error.message || 
+                          'Registration failed. Please try again.';
+      throw new Error(errorMessage);
+    }
   };
 
   const logout = async () => {
-    await authAPI.logout();
-    setIsAuthenticated(false);
-    setCurrentUser(null);
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    }
   };
 
   const value = {

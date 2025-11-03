@@ -1,17 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginForm from './components/LoginForm';
-import RegistrationForm from './components/RegistrationForm';
-import Dashboard from './components/Dashboard';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import LoginForm from './components/auth/LoginForm';
+import RegistrationForm from './components/auth/RegistrationForm';
+import Dashboard from './components/dashboard/Dashboard';
+import MainLayout from './components/layout/MainLayout';
 
-// Protected Route component
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
-// Public Route component (redirect if already authenticated)
 function PublicRoute({ children }) {
   const { isAuthenticated } = useAuth();
   return !isAuthenticated ? children : <Navigate to="/dashboard" />;
@@ -35,7 +34,9 @@ function App() {
             } />
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <Dashboard />
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/dashboard" />} />

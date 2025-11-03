@@ -5,27 +5,47 @@ const API_BASE_URL = 'http://localhost:8000/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Important for cookies
+  withCredentials: true,
+  timeout: 10000, // 10 second timeout
 });
 
-// Request interceptor to add auth token if needed
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
+    console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor with better error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`Response received:`, response.status);
+    return response;
+  },
   (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url
+    });
+
+    if (error.code === 'ECONNREFUSED') {
+      console.error('Backend server is not running. Please start the FastAPI server.');
+      return Promise.reject(new Error('Cannot connect to server. Please make sure the backend is running.'));
+    }
+
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Remove invalid token
+      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       window.location.href = '/login';
     }
+
     return Promise.reject(error);
   }
 );
