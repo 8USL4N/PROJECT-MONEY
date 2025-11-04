@@ -1,7 +1,26 @@
 // src/components/trading/Trading.js
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { tradeAPI, marketAPI } from '../../services/api';
+
+// Список популярных инструментов с FIGI и названиями
+const POPULAR_INSTRUMENTS = [
+  { figi: 'BBG004730N88', symbol: 'SBER', name: 'Сбербанк' },
+  { figi: 'BBG004730RP0', symbol: 'GAZP', name: 'Газпром' },
+  { figi: 'BBG00475JZZ6', symbol: 'LKOH', name: 'Лукойл' },
+  { figi: 'BBG006L8G4H1', symbol: 'YNDX', name: 'Яндекс' },
+  { figi: 'BBG004S681W1', symbol: 'VTBR', name: 'ВТБ' },
+  { figi: 'BBG00475K2X9', symbol: 'ROSN', name: 'Роснефть' },
+  { figi: 'BBG004S68B31', symbol: 'ALRS', name: 'АЛРОСА' },
+  { figi: 'BBG004RVFCY3', symbol: 'MGNT', name: 'Магнит' },
+  { figi: 'BBG004S683W7', symbol: 'TATN', name: 'Татнефть' },
+  { figi: 'BBG00475J7C8', symbol: 'MOEX', name: 'Московская биржа' },
+  { figi: 'BBG004S68758', symbol: 'NLMK', name: 'НЛМК' },
+  { figi: 'BBG00475K6C4', symbol: 'GMKN', name: 'Норникель' },
+  { figi: 'BBG004S681B4', symbol: 'MTSS', name: 'МТС' },
+  { figi: 'BBG004S68507', symbol: 'AFKS', name: 'Система' },
+  { figi: 'BBG00475KKY8', symbol: 'PLZL', name: 'Полюс' },
+];
 
 export default function Trading() {
   const [orderType, setOrderType] = useState('buy');
@@ -10,13 +29,66 @@ export default function Trading() {
   const [currentPrice, setCurrentPrice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const { isDark } = useTheme();
+
+  const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Фильтрация инструментов по поисковому запросу
+  const filteredInstruments = POPULAR_INSTRUMENTS.filter(instrument =>
+    instrument.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    instrument.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    instrument.figi.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Автозакрытие dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+          inputRef.current && !inputRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleInstrumentSelect = (instrument) => {
+    setFigi(instrument.figi);
+    setSearchQuery(`${instrument.symbol} - ${instrument.name}`);
+    setShowDropdown(false);
+    setCurrentPrice(null);
+    setMessage('');
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setFigi(value); // Позволяет вводить FIGI вручную
+    
+    if (value.length > 0) {
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (searchQuery.length > 0 || filteredInstruments.length > 0) {
+      setShowDropdown(true);
+    }
+  };
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
 
     if (!figi) {
-      setMessage('❌ Пожалуйста, введите FIGI');
+      setMessage('❌ Пожалуйста, выберите или введите FIGI');
       return;
     }
 
@@ -39,10 +111,11 @@ export default function Trading() {
 
       const response = await tradeAPI.executeOrder(orderData);
 
-      setMessage(`✅ Ордер успешно исполнен! ${orderType === 'buy' ? 'Покупка' : 'Продажа'} ${quantity} акций FIGI ${figi}`);
+      setMessage(`✅ Ордер успешно исполнен! ${orderType === 'buy' ? 'Покупка' : 'Продажа'} ${quantity} акций`);
 
       setQuantity('');
       setFigi('');
+      setSearchQuery('');
       setCurrentPrice(null);
 
     } catch (error) {
@@ -64,25 +137,24 @@ export default function Trading() {
   };
 
   const handleLoadPrice = async () => {
-  if (!figi) {
-    setMessage('❌ Пожалуйста, введите FIGI');
-    return;
-  }
-  try {
-    const response = await marketAPI.getCurrentPrice(figi);
-    console.log('Ответ API getCurrentPrice:', response.data);  // <-- логируем
-    if (response.data && response.data.current_price != null) {
-      setCurrentPrice(response.data.current_price);
-      setMessage(`💰 Текущая цена: ${response.data.current_price.toLocaleString('ru-RU')} ₽`);
-    } else {
+    if (!figi) {
+      setMessage('❌ Пожалуйста, выберите инструмент');
+      return;
+    }
+    try {
+      const response = await marketAPI.getCurrentPrice(figi);
+      console.log('Ответ API getCurrentPrice:', response.data);
+      if (response.data && response.data.current_price != null) {
+        setCurrentPrice(response.data.current_price);
+        setMessage(`💰 Текущая цена: ${response.data.current_price.toLocaleString('ru-RU')} ₽`);
+      } else {
+        setMessage('❌ Не удалось получить цену');
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки цены:', error);
       setMessage('❌ Не удалось получить цену');
     }
-  } catch (error) {
-    console.error('Ошибка загрузки цены:', error);
-    setMessage('❌ Не удалось получить цену');
-  }
-};
-
+  };
 
   return (
     <div className="space-y-6">
@@ -138,13 +210,17 @@ export default function Trading() {
               </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">FIGI</label>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Инструмент
+              </label>
               <input
+                ref={inputRef}
                 type="text"
-                value={figi}
-                onChange={(e) => setFigi(e.target.value)}
-                placeholder="Введите FIGI"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={handleInputFocus}
+                placeholder="Начните вводить тикер или название..."
                 className={`w-full rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                   isDark
                     ? 'bg-gray-700 border-gray-600 text-white focus:ring-cyan-500'
@@ -152,10 +228,55 @@ export default function Trading() {
                 }`}
                 disabled={loading}
               />
+              
+              {/* Выпадающий список */}
+              {showDropdown && filteredInstruments.length > 0 && (
+                <div 
+                  ref={dropdownRef}
+                  className={`absolute z-50 w-full mt-1 rounded-2xl shadow-lg border max-h-60 overflow-auto ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600' 
+                      : 'bg-white border-gray-200'
+                  }`}
+                >
+                  {filteredInstruments.map((instrument) => (
+                    <div
+                      key={instrument.figi}
+                      className={`px-4 py-3 cursor-pointer transition-colors duration-200 ${
+                        isDark
+                          ? 'hover:bg-gray-600 text-white'
+                          : 'hover:bg-gray-100 text-gray-900'
+                      } ${figi === instrument.figi ? (isDark ? 'bg-cyan-600' : 'bg-blue-100') : ''}`}
+                      onClick={() => handleInstrumentSelect(instrument)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-semibold">{instrument.symbol}</div>
+                          <div className="text-sm opacity-70">{instrument.name}</div>
+                        </div>
+                        <div className={`text-xs px-2 py-1 rounded ${
+                          isDark ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {instrument.figi}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Отображение выбранного FIGI */}
+              {figi && (
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  Выбран FIGI: <span className="font-mono">{figi}</span>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Количество акций</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Количество акций
+              </label>
               <input
                 type="number"
                 value={quantity}
@@ -174,7 +295,14 @@ export default function Trading() {
             <button
               type="button"
               onClick={handleLoadPrice}
-              className="w-full mt-2 py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors"
+              disabled={!figi || loading}
+              className={`w-full py-2 rounded-2xl font-semibold transition-all duration-300 ${
+                !figi || loading
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : isDark
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
             >
               Показать текущую цену
             </button>
@@ -212,6 +340,36 @@ export default function Trading() {
               )}
             </button>
           </form>
+        </div>
+
+        {/* Блок с популярными инструментами для быстрого выбора */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+            Популярные инструменты
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {POPULAR_INSTRUMENTS.slice(0, 8).map((instrument) => (
+              <button
+                key={instrument.figi}
+                onClick={() => handleInstrumentSelect(instrument)}
+                className={`p-3 rounded-2xl text-left transition-all duration-300 ${
+                  isDark
+                    ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600'
+                    : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                } ${figi === instrument.figi ? (isDark ? 'ring-2 ring-cyan-500' : 'ring-2 ring-blue-500') : ''}`}
+              >
+                <div className="font-semibold text-gray-800 dark:text-white">
+                  {instrument.symbol}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {instrument.name}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  {instrument.figi}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
