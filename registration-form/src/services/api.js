@@ -45,8 +45,16 @@ export const tradeAPI = {
   getPortfolio: () => api.get('/trade/portfolio'),
   executeOrder: (orderData) => api.post('/trade/execute', orderData),
 
-  openSandboxAccount: () => api.post('/trade/sandbox/open-account'),
-  sandboxPayIn: (amount) => api.post('/trade/sandbox/pay-in', { amount }),
+  // ИСПРАВЛЕННЫЕ эндпоинты
+  openSandboxAccount: (accountType = "ACCOUNT_TYPE_TINKOFF") => 
+    api.post('/accounts/open', { account_type: accountType }),
+  
+  // ИСПРАВЛЕННЫЙ метод - добавлен account_id
+  sandboxPayIn: (accountId, amount, currency = "RUB") => 
+    api.post('/accounts/payin', { account_id: accountId, amount, currency }),
+
+  // ИСПРАВЛЕННЫЙ метод - правильный эндпоинт
+  getAccounts: () => api.get('/accounts/'), // ← было /accounts/list
 };
 
 // === РЫНОК ===
