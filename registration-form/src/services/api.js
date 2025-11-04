@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'https://192.168.0.28:8000/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -44,6 +44,9 @@ export const authAPI = {
 export const tradeAPI = {
   getPortfolio: () => api.get('/trade/portfolio'),
   executeOrder: (orderData) => api.post('/trade/execute', orderData),
+
+  openSandboxAccount: () => api.post('/trade/sandbox/open-account'),
+  sandboxPayIn: (amount) => api.post('/trade/sandbox/pay-in', { amount }),
 };
 
 // === РЫНОК ===

@@ -1,11 +1,53 @@
 // src/components/portfolio/Portfolio.js
-import React from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePortfolio } from '../../hooks/usePortfolio';
+import { tradeAPI } from '../../services/api';
 
 export default function Portfolio() {
   const { portfolioData, loading, error, loadPortfolioData, formatCurrency } = usePortfolio();
   const { isDark } = useTheme();
+  const [sandboxLoading, setSandboxLoading] = useState(false);
+  const [sandboxMessage, setSandboxMessage] = useState('');
+
+  const handleOpenSandboxAccount = async () => {
+    setSandboxLoading(true);
+    setSandboxMessage('');
+    try {
+      const response = await tradeAPI.openSandboxAccount();
+      setSandboxMessage(`✅ ${response.data.message || 'Счет в песочнице успешно создан!'}`);
+      // Перезагружаем данные портфеля
+      setTimeout(() => loadPortfolioData(), 1000);
+    } catch (error) {
+      console.error('Ошибка создания счета:', error);
+      setSandboxMessage(`❌ ${error.response?.data?.detail || 'Ошибка создания счета в песочнице'}`);
+    } finally {
+      setSandboxLoading(false);
+    }
+  };
+
+  const handleSandboxPayIn = async () => {
+    const amount = prompt('Введите сумму пополнения (рубли):', '100000');
+    
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+      setSandboxMessage('❌ Введите корректную сумму');
+      return;
+    }
+
+    setSandboxLoading(true);
+    setSandboxMessage('');
+    try {
+      const response = await tradeAPI.sandboxPayIn(parseFloat(amount));
+      setSandboxMessage(`✅ ${response.data.message || `Счет пополнен на ${amount} рублей!`}`);
+      // Перезагружаем данные портфеля
+      setTimeout(() => loadPortfolioData(), 1000);
+    } catch (error) {
+      console.error('Ошибка пополнения счета:', error);
+      setSandboxMessage(`❌ ${error.response?.data?.detail || 'Ошибка пополнения счета'}`);
+    } finally {
+      setSandboxLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -31,16 +73,46 @@ export default function Portfolio() {
               Детальный обзор ваших инвестиций
             </p>
           </div>
-          <button
-            onClick={loadPortfolioData}
-            className={`px-4 py-2 rounded-2xl font-semibold text-white bg-white/20 hover:bg-white/30 transition-all duration-300 ${
-              isDark ? 'hover:shadow-lg' : 'hover:shadow-md'
-            }`}
-          >
-            Обновить
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleOpenSandboxAccount}
+              disabled={sandboxLoading}
+              className={`px-4 py-2 rounded-2xl font-semibold text-white bg-white/20 hover:bg-white/30 transition-all duration-300 disabled:opacity-50 ${
+                isDark ? 'hover:shadow-lg' : 'hover:shadow-md'
+              }`}
+            >
+              {sandboxLoading ? 'Создание...' : 'Создать счет'}
+            </button>
+            <button
+              onClick={handleSandboxPayIn}
+              disabled={sandboxLoading}
+              className={`px-4 py-2 rounded-2xl font-semibold text-white bg-white/20 hover:bg-white/30 transition-all duration-300 disabled:opacity-50 ${
+                isDark ? 'hover:shadow-lg' : 'hover:shadow-md'
+              }`}
+            >
+              {sandboxLoading ? 'Пополнение...' : 'Пополнить счет'}
+            </button>
+            <button
+              onClick={loadPortfolioData}
+              className={`px-4 py-2 rounded-2xl font-semibold text-white bg-white/20 hover:bg-white/30 transition-all duration-300 ${
+                isDark ? 'hover:shadow-lg' : 'hover:shadow-md'
+              }`}
+            >
+              Обновить
+            </button>
+          </div>
         </div>
       </div>
+
+      {sandboxMessage && (
+        <div className={`p-4 rounded-2xl ${
+          sandboxMessage.includes('❌') 
+            ? 'bg-red-100 border border-red-300 text-red-700 dark:bg-red-900 dark:border-red-700 dark:text-red-200'
+            : 'bg-green-100 border border-green-300 text-green-700 dark:bg-green-900 dark:border-green-700 dark:text-green-200'
+        }`}>
+          {sandboxMessage}
+        </div>
+      )}
 
       {error && (
         <div className={`rounded-2xl p-4 border ${
