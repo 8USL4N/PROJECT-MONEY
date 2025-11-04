@@ -33,14 +33,14 @@ export default function RegistrationForm() {
 
     try {
       await register(formData);
-      alert("Registration successful! Please log in.");
+      alert("Регистрация успешна! Пожалуйста, войдите в систему.");
       navigate("/login");
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Ошибка регистрации:', error);
       setError(
         error.response?.data?.detail ||
         error.message ||
-        "Registration failed. Please check your information and try again."
+        "Ошибка регистрации. Пожалуйста, проверьте ваши данные и попробуйте снова."
       );
     } finally {
       setLoading(false);
@@ -66,8 +66,8 @@ export default function RegistrationForm() {
           </div>
           <h1 className={`text-3xl font-bold mb-2 transition-colors duration-300 ${
             isDark ? 'text-white' : 'text-gray-800'
-          }`}>Join Us Today</h1>
-          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Create your account to get started</p>
+          }`}>Присоединяйтесь к нам</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Создайте учетную запись чтобы начать</p>
         </div>
 
         <div className={`rounded-3xl shadow-2xl border p-8 backdrop-blur-lg transition-colors duration-300 ${
@@ -107,7 +107,7 @@ export default function RegistrationForm() {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Username"
+                  placeholder="Имя пользователя"
                   required
                   className={`w-full pl-10 pr-4 py-3 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                     isDark
@@ -130,7 +130,7 @@ export default function RegistrationForm() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="Email address"
+                  placeholder="Адрес электронной почты"
                   required
                   className={`w-full pl-10 pr-4 py-3 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                     isDark
@@ -153,7 +153,7 @@ export default function RegistrationForm() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Password"
+                  placeholder="Пароль"
                   required
                   className={`w-full pl-10 pr-4 py-3 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                     isDark
@@ -176,7 +176,7 @@ export default function RegistrationForm() {
                   name="tinkoff_token"
                   value={formData.tinkoff_token}
                   onChange={handleChange}
-                  placeholder="Tinkoff Investment Token (optional)"
+                  placeholder="Токен Тинькофф Инвестиций (опционально)"
                   className={`w-full pl-10 pr-4 py-3 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                     isDark
                       ? 'bg-gray-700/50 border-gray-600 text-white focus:ring-cyan-500'
@@ -198,10 +198,10 @@ export default function RegistrationForm() {
               {loading ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating Account...
+                  Создание аккаунта...
                 </div>
               ) : (
-                "Create Account"
+                "Создать аккаунт"
               )}
             </button>
 
@@ -210,14 +210,14 @@ export default function RegistrationForm() {
                 ? 'text-gray-400 border-gray-700' 
                 : 'text-gray-600 border-gray-200'
             }`}>
-              Already have an account?{" "}
+              Уже есть аккаунт?{" "}
               <Link
                 to="/login"
                 className={`font-semibold transition-colors duration-300 ${
                   isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-purple-600 hover:text-purple-700'
                 }`}
               >
-                Sign in
+                Войти
               </Link>
             </div>
           </form>

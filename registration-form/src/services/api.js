@@ -10,7 +10,7 @@ const api = axios.create({
 
 // Логи для разработки
 api.interceptors.request.use(config => {
-  console.log(`→ ${config.method?.toUpperCase()} ${config.url}`);
+  console.log(`→ ${config.method?.toUpperCase()} ${config.url}`, config.data);
   return config;
 });
 
@@ -50,11 +50,22 @@ export const tradeAPI = {
 export const marketAPI = {
   loadCandles: (figi, days = 1) =>
     api.get(`/market/candles/${figi}?days=${days}`),
+  
+  // Добавленный endpoint для получения текущей цены
+  getCurrentPrice: (figi) =>
+    api.get(`/market/current-price/${figi}`),
 };
 
-// === МОДЕЛИ И БЭКТЕСТ (если нужны) ===
+// === МОДЕЛИ И БЭКТЕСТ ===
 export const modelAPI = {
-  trainSVR: () => api.post('/model/train/svr'),
+  // Исправленные методы - теперь принимают параметры
+  trainSVR: (params = {}) => api.post('/model/train/svr', params),
+  trainGPR: (params = {}) => api.post('/model/train/gpr', params),
+  trainSVRSimple: (params = {}) => api.post('/model/train/svr/simple', params),
+  getModels: () => api.get('/model/list'),
+  
+  // Новый метод для отладки
+  debugRequest: (data) => api.post('/model/debug/raw', data),
 };
 
 export const backtestAPI = {

@@ -5,7 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 export default function Backtest() {
   const [backtestConfig, setBacktestConfig] = useState({
     model: 'svr',
-    asset: 'AAPL',
+    asset: 'SBER',
     period: '6m',
     initialCapital: 10000,
     commission: 0.1
@@ -14,7 +14,7 @@ export default function Backtest() {
 
   const handleRunBacktest = async () => {
     // Здесь будет интеграция с API бэктестинга
-    alert('Backtest functionality will be implemented with backend API');
+    alert('Функционал бэктестинга будет реализован с API бэкенда');
   };
 
   return (
@@ -24,24 +24,24 @@ export default function Backtest() {
           ? 'bg-gradient-to-r from-green-600 to-cyan-600'
           : 'bg-gradient-to-r from-blue-500 to-purple-600'
       }`}>
-        <h1 className="text-3xl font-bold mb-2">Backtesting</h1>
+        <h1 className="text-3xl font-bold mb-2">Бэктестинг</h1>
         <p className={isDark ? 'text-cyan-100' : 'text-blue-100'}>
-          Test your trading strategies on historical data
+          Тестируйте ваши торговые стратегии на исторических данных
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Configuration Panel */}
+        {/* Панель конфигурации */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
             <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
-              Backtest Configuration
+              Конфигурация бэктестинга
             </h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  AI Model
+                  AI Модель
                 </label>
                 <select
                   value={backtestConfig.model}
@@ -52,15 +52,15 @@ export default function Backtest() {
                       : 'border border-gray-300 focus:ring-blue-500'
                   }`}
                 >
-                  <option value="svr">SVR with RBF Kernel</option>
-                  <option value="gpr">GPR with Matérn Kernel</option>
-                  <option value="adaptive">Adaptive Model</option>
+                  <option value="svr">SVR с RBF ядром</option>
+                  <option value="gpr">GPR с Matérn ядром</option>
+                  <option value="adaptive">Адаптивная модель</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Asset
+                  Актив
                 </label>
                 <select
                   value={backtestConfig.asset}
@@ -71,16 +71,16 @@ export default function Backtest() {
                       : 'border border-gray-300 focus:ring-blue-500'
                   }`}
                 >
-                  <option value="AAPL">Apple (AAPL)</option>
-                  <option value="GOOGL">Google (GOOGL)</option>
-                  <option value="TSLA">Tesla (TSLA)</option>
-                  <option value="BTC-USD">Bitcoin (BTC-USD)</option>
+                  <option value="SBER">Сбербанк (SBER)</option>
+                  <option value="GAZP">Газпром (GAZP)</option>
+                  <option value="LKOH">Лукойл (LKOH)</option>
+                  <option value="YNDX">Яндекс (YNDX)</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Period
+                  Период
                 </label>
                 <select
                   value={backtestConfig.period}
@@ -91,16 +91,16 @@ export default function Backtest() {
                       : 'border border-gray-300 focus:ring-blue-500'
                   }`}
                 >
-                  <option value="1m">1 Month</option>
-                  <option value="3m">3 Months</option>
-                  <option value="6m">6 Months</option>
-                  <option value="1y">1 Year</option>
+                  <option value="1m">1 месяц</option>
+                  <option value="3m">3 месяца</option>
+                  <option value="6m">6 месяцев</option>
+                  <option value="1y">1 год</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Initial Capital ($)
+                  Начальный капитал (₽)
                 </label>
                 <input
                   type="number"
@@ -122,23 +122,23 @@ export default function Backtest() {
                     : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
                 }`}
               >
-                Run Backtest
+                Запустить бэктест
               </button>
             </div>
           </div>
         </div>
 
-        {/* Results Panel */}
+        {/* Панель результатов */}
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
             <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
-              Backtest Results
+              Результаты бэктестинга
             </h3>
             <div className={`h-96 rounded-2xl flex items-center justify-center ${
               isDark ? 'bg-gray-700' : 'bg-gray-100'
             }`}>
               <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
-                Backtest results and performance charts will appear here
+                Результаты бэктестинга и графики производительности появятся здесь
               </span>
             </div>
           </div>
