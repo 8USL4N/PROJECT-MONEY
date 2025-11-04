@@ -42,20 +42,36 @@ export const authAPI = {
 
 // === ТОРГОВЛЯ ===
 export const tradeAPI = {
-  getPortfolio: () => api.get('/trade/portfolio'),
+  getPortfolio: (accountId = null) => 
+    api.get('/trade/portfolio', { params: { account_id: accountId } }),
+  
   executeOrder: (orderData) => api.post('/trade/execute', orderData),
 
-  // ИСПРАВЛЕННЫЕ эндпоинты
+  // Эндпоинты для счетов
   openSandboxAccount: (accountType = "ACCOUNT_TYPE_TINKOFF") => 
     api.post('/accounts/open', { account_type: accountType }),
   
-  // ИСПРАВЛЕННЫЙ метод - добавлен account_id
   sandboxPayIn: (accountId, amount, currency = "RUB") => 
     api.post('/accounts/payin', { account_id: accountId, amount, currency }),
 
-  // ИСПРАВЛЕННЫЙ метод - правильный эндпоинт
-  getAccounts: () => api.get('/accounts/'), // ← было /accounts/list
+  getAccounts: () => api.get('/accounts/'),
+  
+  // Новые методы для работы с балансом и портфелем по счету
+  getAccountBalance: (accountId = null) => 
+    api.get('/accounts/balance', { params: { account_id: accountId } }),
+  
+  getAccountPortfolio: (accountId = null) => 
+    api.get('/accounts/portfolio', { params: { account_id: accountId } }),
+  
+  getAccountOperations: (accountId, fromDate, toDate) => 
+    api.get('/accounts/operations', { 
+      params: { account_id: accountId, from_date: fromDate, to_date: toDate } 
+    }),
+  
+  closeAccount: (accountId) => 
+    api.delete(`/accounts/${accountId}`),
 };
+
 
 // === РЫНОК ===
 export const marketAPI = {

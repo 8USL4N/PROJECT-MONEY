@@ -10,39 +10,65 @@ export default function Portfolio() {
   const [sandboxLoading, setSandboxLoading] = useState(false);
   const [sandboxMessage, setSandboxMessage] = useState('');
   const [userAccounts, setUserAccounts] = useState([]);
-  const [showAccountSelection, setShowAccountSelection] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountsLoading, setAccountsLoading] = useState(true);
   const [showCreateAccountConfirm, setShowCreateAccountConfirm] = useState(false);
   const [showAmountInput, setShowAmountInput] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [amount, setAmount] = useState('100000');
+  const [accountBalance, setAccountBalance] = useState(null);
 
   // Загружаем список счетов при монтировании компонента
   useEffect(() => {
     loadUserAccounts();
   }, []);
 
+  // Загружаем баланс при выборе счета
+  useEffect(() => {
+    if (selectedAccount) {
+      loadAccountBalance(selectedAccount.id);
+      loadPortfolioData(selectedAccount.id); // Передаем account_id в хук
+    }
+  }, [selectedAccount]);
+
   const loadUserAccounts = async () => {
     setAccountsLoading(true);
     try {
-      console.log('Загрузка счетов...');
+      console.log('🔄 Загрузка счетов...');
       const response = await tradeAPI.getAccounts();
-      console.log('Ответ от API:', response);
-      console.log('Данные счетов:', response.data);
+      console.log('✅ Ответ от API:', response);
       
       const accounts = response.data.accounts || [];
-      console.log('Массив счетов:', accounts);
+      console.log('📋 Массив счетов:', accounts);
       
       setUserAccounts(accounts);
-      console.log('Установлены счета:', accounts);
+      
+      // Автоматически выбираем первый счет, если есть
+      if (accounts.length > 0 && !selectedAccount) {
+        setSelectedAccount(accounts[0]);
+        console.log('🎯 Автовыбор первого счета:', accounts[0].id);
+      }
       
     } catch (error) {
-      console.error('Ошибка загрузки счетов:', error);
-      console.error('Детали ошибки:', error.response?.data);
+      console.error('❌ Ошибка загрузки счетов:', error);
       setUserAccounts([]);
     } finally {
       setAccountsLoading(false);
     }
+  };
+
+  const loadAccountBalance = async (accountId) => {
+    try {
+      const response = await tradeAPI.getAccountBalance(accountId);
+      setAccountBalance(response.data.balance);
+      console.log('💰 Баланс счета:', response.data.balance);
+    } catch (error) {
+      console.error('❌ Ошибка загрузки баланса:', error);
+    }
+  };
+
+  const handleAccountSelect = (account) => {
+    setSelectedAccount(account);
+    setSandboxMessage(`✅ Выбран счет: ${account.id.slice(0, 8)}...`);
   };
 
   const handleOpenSandboxAccount = async () => {
@@ -52,54 +78,25 @@ export default function Portfolio() {
       const response = await tradeAPI.openSandboxAccount("ACCOUNT_TYPE_TINKOFF");
       setSandboxMessage(`✅ ${response.data.message || 'Счет в песочнице успешно создан!'}`);
       
-      // Обновляем список счетов и портфеля
+      // Обновляем список счетов
       setTimeout(() => {
         loadUserAccounts();
-        loadPortfolioData();
       }, 1000);
     } catch (error) {
       console.error('Ошибка создания счета:', error);
       const errorDetail = error.response?.data?.detail;
-      
-      if (error.response?.status === 422) {
-        const validationErrors = error.response.data.detail;
-        setSandboxMessage(`❌ Ошибка валидации: ${JSON.stringify(validationErrors)}`);
-      } else if (errorDetail && errorDetail.includes('already exists')) {
-        setSandboxMessage('ℹ️ У вас уже есть открытый счет в песочнице');
-      } else {
-        setSandboxMessage(`❌ ${errorDetail || 'Ошибка создания счета в песочнице'}`);
-      }
+      setSandboxMessage(`❌ ${errorDetail || 'Ошибка создания счета в песочнице'}`);
     } finally {
       setSandboxLoading(false);
     }
   };
 
   const handleSandboxPayIn = async () => {
-    // Если нет счетов, предлагаем создать новый
-    if (!userAccounts || userAccounts.length === 0) {
-      setShowCreateAccountConfirm(true);
+    if (!selectedAccount) {
+      setSandboxMessage('❌ Сначала выберите счет для пополнения');
       return;
     }
-
-    if (userAccounts.length === 1) {
-      // Если счет только один, сразу запрашиваем сумму
-      setSelectedAccountId(userAccounts[0].id);
-      setShowAmountInput(true);
-    } else {
-      // Если несколько счетов, показываем выбор
-      setShowAccountSelection(true);
-    }
-  };
-
-  const handleAccountSelect = async (accountId) => {
-    setShowAccountSelection(false);
-    setSelectedAccountId(accountId);
     setShowAmountInput(true);
-  };
-
-  const handleConfirmCreateAccount = async () => {
-    setShowCreateAccountConfirm(false);
-    await handleOpenSandboxAccount();
   };
 
   const handleConfirmAmount = async () => {
@@ -110,29 +107,51 @@ export default function Portfolio() {
     }
     
     setShowAmountInput(false);
-    await processPayIn(selectedAccountId, parseFloat(amount));
+    await processPayIn(selectedAccount.id, parseFloat(amount));
   };
 
   const processPayIn = async (accountId, amount) => {
     setSandboxLoading(true);
     setSandboxMessage('');
     try {
-      // Теперь передаем accountId в метод sandboxPayIn
       const response = await tradeAPI.sandboxPayIn(accountId, amount, "RUB");
       setSandboxMessage(`✅ ${response.data.message || `Счет пополнен на ${amount} рублей!`}`);
       
-      // Перезагружаем данные портфеля
-      setTimeout(() => loadPortfolioData(), 1000);
+      // Перезагружаем баланс и портфель
+      setTimeout(() => {
+        loadAccountBalance(accountId);
+        loadPortfolioData(accountId);
+      }, 1000);
     } catch (error) {
       console.error('Ошибка пополнения счета:', error);
       const errorDetail = error.response?.data?.detail;
+      setSandboxMessage(`❌ ${errorDetail || 'Ошибка пополнения счета'}`);
+    } finally {
+      setSandboxLoading(false);
+    }
+  };
+
+  const handleCloseAccount = async (accountId) => {
+    if (!window.confirm('Вы уверены, что хотите закрыть этот счет?')) {
+      return;
+    }
+
+    setSandboxLoading(true);
+    try {
+      await tradeAPI.closeAccount(accountId);
+      setSandboxMessage('✅ Счет успешно закрыт');
       
-      if (error.response?.status === 422) {
-        const validationErrors = error.response.data.detail;
-        setSandboxMessage(`❌ Ошибка валидации: ${JSON.stringify(validationErrors)}`);
-      } else {
-        setSandboxMessage(`❌ ${errorDetail || 'Ошибка пополнения счета'}`);
-      }
+      // Обновляем список счетов
+      setTimeout(() => {
+        loadUserAccounts();
+        if (selectedAccount?.id === accountId) {
+          setSelectedAccount(null);
+          setAccountBalance(null);
+        }
+      }, 1000);
+    } catch (error) {
+      console.error('Ошибка закрытия счета:', error);
+      setSandboxMessage(`❌ ${error.response?.data?.detail || 'Ошибка закрытия счета'}`);
     } finally {
       setSandboxLoading(false);
     }
@@ -150,42 +169,6 @@ export default function Portfolio() {
 
   return (
     <div className="space-y-6">
-      {/* Модальное окно подтверждения создания счета */}
-      {showCreateAccountConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`rounded-3xl p-6 max-w-md w-full mx-4 ${
-            isDark ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-              Создание счета
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              У вас нет открытых счетов. Хотите создать счет в песочнице?
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={handleConfirmCreateAccount}
-                className={`flex-1 py-3 rounded-2xl font-semibold text-white bg-blue-500 hover:bg-blue-600 transition-all duration-300 ${
-                  isDark ? 'hover:shadow-lg' : 'hover:shadow-md'
-                }`}
-              >
-                Создать счет
-              </button>
-              <button
-                onClick={() => setShowCreateAccountConfirm(false)}
-                className={`flex-1 py-3 rounded-2xl font-medium ${
-                  isDark 
-                    ? 'bg-gray-600 hover:bg-gray-500 text-white' 
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
-                }`}
-              >
-                Отмена
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Модальное окно ввода суммы */}
       {showAmountInput && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -237,57 +220,20 @@ export default function Portfolio() {
         </div>
       )}
 
-      {/* Модальное окно выбора счета */}
-      {showAccountSelection && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`rounded-3xl p-6 max-w-md w-full mx-4 ${
-            isDark ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-              Выберите счет для пополнения
-            </h3>
-            <div className="space-y-3">
-              {userAccounts.map((account) => (
-                <button
-                  key={account.id}
-                  onClick={() => handleAccountSelect(account.id)}
-                  className={`w-full p-4 rounded-2xl text-left transition-all duration-200 ${
-                    isDark 
-                      ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                  }`}
-                >
-                  <div className="font-medium">Счет: {account.id}</div>
-                  <div className="text-sm opacity-70">
-                    Тип: {account.type || 'Песочница'}
-                  </div>
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowAccountSelection(false)}
-              className={`w-full mt-4 py-2 rounded-2xl font-medium ${
-                isDark 
-                  ? 'bg-gray-600 hover:bg-gray-500 text-white' 
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
-              }`}
-            >
-              Отмена
-            </button>
-          </div>
-        </div>
-      )}
-
+      {/* Шапка с выбором счета */}
       <div className={`rounded-3xl p-8 text-white shadow-2xl ${
         isDark
           ? 'bg-gradient-to-r from-green-600 to-cyan-600'
           : 'bg-gradient-to-r from-blue-500 to-purple-600'
       }`}>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2">Портфель</h1>
             <p className={isDark ? 'text-cyan-100' : 'text-blue-100'}>
-              Детальный обзор ваших инвестиций
+              {selectedAccount 
+                ? `Счет: ${selectedAccount.id.slice(0, 8)}...` 
+                : 'Выберите счет для просмотра'
+              }
             </p>
           </div>
           <div className="flex space-x-3">
@@ -302,7 +248,7 @@ export default function Portfolio() {
             </button>
             <button
               onClick={handleSandboxPayIn}
-              disabled={sandboxLoading}
+              disabled={sandboxLoading || !selectedAccount}
               className={`px-4 py-2 rounded-2xl font-semibold text-white bg-white/20 hover:bg-white/30 transition-all duration-300 disabled:opacity-50 ${
                 isDark ? 'hover:shadow-lg' : 'hover:shadow-md'
               }`}
@@ -310,7 +256,7 @@ export default function Portfolio() {
               {sandboxLoading ? 'Пополнение...' : 'Пополнить счет'}
             </button>
             <button
-              onClick={loadPortfolioData}
+              onClick={() => selectedAccount && loadPortfolioData(selectedAccount.id)}
               className={`px-4 py-2 rounded-2xl font-semibold text-white bg-white/20 hover:bg-white/30 transition-all duration-300 ${
                 isDark ? 'hover:shadow-lg' : 'hover:shadow-md'
               }`}
@@ -321,45 +267,134 @@ export default function Portfolio() {
         </div>
       </div>
 
-      {/* Информация о доступных счетах */}
-      {!accountsLoading && userAccounts.length > 0 && (
-        <div className={`rounded-2xl p-4 ${
-          isDark ? 'bg-gray-800 border border-gray-700' : 'bg-blue-50 border border-blue-200'
-        }`}>
-          <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">
-            Доступные счета ({userAccounts.length})
-          </h4>
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-            {userAccounts.map(account => (
-              <div key={account.id} className="flex items-center space-x-2">
-                <span className="text-xs">•</span>
-                <span>ID: {account.id.slice(0, 8)}...</span>
-                <span className="opacity-70">({account.type || 'Песочница'})</span>
+      {/* Блок выбора счета */}
+      <div className={`rounded-2xl p-6 ${
+        isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200 shadow-lg'
+      }`}>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          Выбор счета
+        </h3>
+        
+        {accountsLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <div className={`animate-spin rounded-full h-6 w-6 border-b-2 mr-3 ${
+              isDark ? 'border-cyan-500' : 'border-blue-500'
+            }`}></div>
+            <p className="text-gray-600 dark:text-gray-300">Загрузка счетов...</p>
+          </div>
+        ) : userAccounts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userAccounts.map((account) => (
+              <div
+                key={account.id}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
+                  selectedAccount?.id === account.id
+                    ? isDark 
+                      ? 'border-cyan-500 bg-cyan-500/10' 
+                      : 'border-blue-500 bg-blue-50'
+                    : isDark 
+                      ? 'border-gray-600 bg-gray-700/50 hover:border-gray-500' 
+                      : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                }`}
+                onClick={() => handleAccountSelect(account)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                      {account.name || 'Без названия'}
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      ID: {account.id.slice(0, 12)}...
+                    </p>
+                  </div>
+                  {selectedAccount?.id === account.id && (
+                    <div className={`w-3 h-3 rounded-full ${
+                      isDark ? 'bg-cyan-500' : 'bg-blue-500'
+                    }`}></div>
+                  )}
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className={`px-2 py-1 rounded-full ${
+                    isDark ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    {account.type || 'Песочница'}
+                  </span>
+                  <span className={`px-2 py-1 rounded-full ${
+                    account.status === 'ACCOUNT_STATUS_OPEN' 
+                      ? isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
+                      : isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {account.status === 'ACCOUNT_STATUS_OPEN' ? 'Открыт' : 'Закрыт'}
+                  </span>
+                </div>
+                {selectedAccount?.id === account.id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloseAccount(account.id);
+                    }}
+                    className="w-full mt-3 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                  >
+                    Закрыть счет
+                  </button>
+                )}
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className={`text-center py-6 rounded-2xl ${
+            isDark ? 'bg-gray-700/50' : 'bg-gray-50'
+          }`}>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Нет доступных счетов
+            </p>
+            <button
+              onClick={handleOpenSandboxAccount}
+              className={`px-4 py-2 rounded-2xl font-semibold ${
+                isDark 
+                  ? 'bg-cyan-600 hover:bg-cyan-500 text-white' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
+            >
+              Создать первый счет
+            </button>
+          </div>
+        )}
+      </div>
 
-      {!accountsLoading && userAccounts.length === 0 && (
-        <div className={`rounded-2xl p-4 ${
-          isDark ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-yellow-50 border border-yellow-200'
+      {/* Информация о балансе выбранного счета */}
+      {selectedAccount && accountBalance && (
+        <div className={`rounded-2xl p-6 ${
+          isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200 shadow-lg'
         }`}>
-          <p className="text-yellow-700 dark:text-yellow-300">
-            Нет доступных счетов. Создайте счет в песочнице, чтобы начать работу.
-          </p>
-        </div>
-      )}
-
-      {accountsLoading && (
-        <div className={`rounded-2xl p-4 ${
-          isDark ? 'bg-gray-800 border border-gray-700' : 'bg-gray-100 border border-gray-200'
-        }`}>
-          <div className="flex items-center justify-center">
-            <div className={`animate-spin rounded-full h-5 w-5 border-b-2 mr-3 ${
-              isDark ? 'border-cyan-500' : 'border-blue-500'
-            }`}></div>
-            <p className="text-gray-600 dark:text-gray-300">Загрузка информации о счетах...</p>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+            Баланс счета
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`p-4 rounded-2xl ${
+              isDark ? 'bg-gray-700' : 'bg-blue-50'
+            }`}>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Общая сумма</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatCurrency(accountBalance.total_amount || 0)} ₽
+              </p>
+            </div>
+            <div className={`p-4 rounded-2xl ${
+              isDark ? 'bg-gray-700' : 'bg-green-50'
+            }`}>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Доступно</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatCurrency(accountBalance.available_amount || 0)} ₽
+              </p>
+            </div>
+            <div className={`p-4 rounded-2xl ${
+              isDark ? 'bg-gray-700' : 'bg-purple-50'
+            }`}>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Валюта</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {accountBalance.currency || 'RUB'}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -368,8 +403,6 @@ export default function Portfolio() {
         <div className={`p-4 rounded-2xl ${
           sandboxMessage.includes('❌') || sandboxMessage.includes('Ошибка')
             ? 'bg-red-100 border border-red-300 text-red-700 dark:bg-red-900 dark:border-red-700 dark:text-red-200'
-            : sandboxMessage.includes('ℹ️')
-            ? 'bg-blue-100 border border-blue-300 text-blue-700 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-200'
             : 'bg-green-100 border border-green-300 text-green-700 dark:bg-green-900 dark:border-green-700 dark:text-green-200'
         }`}>
           {sandboxMessage}
@@ -389,18 +422,38 @@ export default function Portfolio() {
         </div>
       )}
 
-      {/* Остальной код компонента */}
-      <PortfolioSummary portfolioData={portfolioData} isDark={isDark} formatCurrency={formatCurrency} />
-      <CashBalance cashBalance={portfolioData?.cashBalance} isDark={isDark} formatCurrency={formatCurrency} />
-      <PortfolioDetails positions={portfolioData?.positions} isDark={isDark} formatCurrency={formatCurrency} />
+      {/* Основная информация о портфеле */}
+      {selectedAccount ? (
+        <>
+          <PortfolioSummary portfolioData={portfolioData} isDark={isDark} formatCurrency={formatCurrency} />
+          <CashBalance cashBalance={portfolioData?.cashBalance} isDark={isDark} formatCurrency={formatCurrency} />
+          <PortfolioDetails positions={portfolioData?.positions} isDark={isDark} formatCurrency={formatCurrency} />
+        </>
+      ) : (
+        <div className={`rounded-2xl p-8 text-center ${
+          isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200 shadow-lg'
+        }`}>
+          <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+            isDark ? 'bg-gray-700' : 'bg-gray-100'
+          }`}>
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Выберите счет для просмотра портфеля
+          </h4>
+          <p className="text-gray-600 dark:text-gray-400">
+            Выберите счет из списка выше, чтобы увидеть детальную информацию о ваших инвестициях
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
-// Остальные компоненты остаются без изменений...
-// PortfolioSummary, SummaryCard, CashBalance, PortfolioDetails, PortfolioRow, EmptyPortfolio
-// ... (они остаются такими же как в предыдущем коде)
-// Остальные компоненты (PortfolioSummary, SummaryCard, CashBalance, PortfolioDetails, PortfolioRow, EmptyPortfolio) 
+// Остальные компоненты (PortfolioSummary, CashBalance, PortfolioDetails и т.д.) остаются без изменений
+// ... (они такие же как в предыдущем коде)
 const PortfolioSummary = React.memo(({ portfolioData, isDark, formatCurrency }) => (
   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
     <SummaryCard
