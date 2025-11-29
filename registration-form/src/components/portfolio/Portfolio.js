@@ -36,18 +36,18 @@ export default function Portfolio() {
       console.log('🔄 Загрузка счетов...');
       const response = await tradeAPI.getAccounts();
       console.log('✅ Ответ от API:', response);
-      
+
       const accounts = response.data.accounts || [];
       console.log('📋 Массив счетов:', accounts);
-      
+
       setUserAccounts(accounts);
-      
+
       // Автоматически выбираем первый счет, если есть
       if (accounts.length > 0 && !selectedAccount) {
         setSelectedAccount(accounts[0]);
         console.log('🎯 Автовыбор первого счета:', accounts[0].id);
       }
-      
+
     } catch (error) {
       console.error('❌ Ошибка загрузки счетов:', error);
       setUserAccounts([]);
@@ -77,7 +77,7 @@ export default function Portfolio() {
     try {
       const response = await tradeAPI.openSandboxAccount("ACCOUNT_TYPE_TINKOFF");
       setSandboxMessage(`✅ ${response.data.message || 'Счет в песочнице успешно создан!'}`);
-      
+
       // Обновляем список счетов
       setTimeout(() => {
         loadUserAccounts();
@@ -105,7 +105,7 @@ export default function Portfolio() {
       setShowAmountInput(false);
       return;
     }
-    
+
     setShowAmountInput(false);
     await processPayIn(selectedAccount.id, parseFloat(amount));
   };
@@ -116,7 +116,7 @@ export default function Portfolio() {
     try {
       const response = await tradeAPI.sandboxPayIn(accountId, amount, "RUB");
       setSandboxMessage(`✅ ${response.data.message || `Счет пополнен на ${amount} рублей!`}`);
-      
+
       // Перезагружаем баланс и портфель
       setTimeout(() => {
         loadAccountBalance(accountId);
@@ -140,7 +140,7 @@ export default function Portfolio() {
     try {
       await tradeAPI.closeAccount(accountId);
       setSandboxMessage('✅ Счет успешно закрыт');
-      
+
       // Обновляем список счетов
       setTimeout(() => {
         loadUserAccounts();
@@ -187,8 +187,8 @@ export default function Portfolio() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className={`w-full px-4 py-3 rounded-2xl border ${
-                  isDark 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder="100000"
@@ -208,8 +208,8 @@ export default function Portfolio() {
               <button
                 onClick={() => setShowAmountInput(false)}
                 className={`flex-1 py-3 rounded-2xl font-medium ${
-                  isDark 
-                    ? 'bg-gray-600 hover:bg-gray-500 text-white' 
+                  isDark
+                    ? 'bg-gray-600 hover:bg-gray-500 text-white'
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
                 }`}
               >
@@ -230,8 +230,8 @@ export default function Portfolio() {
           <div>
             <h1 className="text-3xl font-bold mb-2">Портфель</h1>
             <p className={isDark ? 'text-cyan-100' : 'text-blue-100'}>
-              {selectedAccount 
-                ? `Счет: ${selectedAccount.id.slice(0, 8)}...` 
+              {selectedAccount
+                ? `Счет: ${selectedAccount.id.slice(0, 8)}...`
                 : 'Выберите счет для просмотра'
               }
             </p>
@@ -274,7 +274,7 @@ export default function Portfolio() {
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
           Выбор счета
         </h3>
-        
+
         {accountsLoading ? (
           <div className="flex items-center justify-center py-4">
             <div className={`animate-spin rounded-full h-6 w-6 border-b-2 mr-3 ${
@@ -289,11 +289,11 @@ export default function Portfolio() {
                 key={account.id}
                 className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
                   selectedAccount?.id === account.id
-                    ? isDark 
-                      ? 'border-cyan-500 bg-cyan-500/10' 
+                    ? isDark
+                      ? 'border-cyan-500 bg-cyan-500/10'
                       : 'border-blue-500 bg-blue-50'
-                    : isDark 
-                      ? 'border-gray-600 bg-gray-700/50 hover:border-gray-500' 
+                    : isDark
+                      ? 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
                       : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                 }`}
                 onClick={() => handleAccountSelect(account)}
@@ -320,7 +320,7 @@ export default function Portfolio() {
                     {account.type || 'Песочница'}
                   </span>
                   <span className={`px-2 py-1 rounded-full ${
-                    account.status === 'ACCOUNT_STATUS_OPEN' 
+                    account.status === 'ACCOUNT_STATUS_OPEN'
                       ? isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
                       : isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700'
                   }`}>
@@ -351,8 +351,8 @@ export default function Portfolio() {
             <button
               onClick={handleOpenSandboxAccount}
               className={`px-4 py-2 rounded-2xl font-semibold ${
-                isDark 
-                  ? 'bg-cyan-600 hover:bg-cyan-500 text-white' 
+                isDark
+                  ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
                   : 'bg-blue-500 hover:bg-blue-600 text-white'
               }`}
             >
@@ -489,7 +489,7 @@ const SummaryCard = React.memo(({ title, value, subtitle, isDark, isProfit }) =>
   <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
     <p className={`text-2xl font-bold mt-1 ${
-      isProfit 
+      isProfit
         ? (typeof value === 'string' && value.includes('+')
             ? 'text-green-600 dark:text-green-400'
             : 'text-red-600 dark:text-red-400')
@@ -548,7 +548,7 @@ const PortfolioDetails = React.memo(({ positions, isDark, formatCurrency }) => (
           </thead>
           <tbody>
             {positions.map((position, index) => (
-              <PortfolioRow 
+              <PortfolioRow
                 key={`${position.figi}-${index}`}
                 position={position}
                 isDark={isDark}
@@ -571,12 +571,12 @@ const PortfolioRow = React.memo(({ position, isDark, formatCurrency }) => (
     <td className="py-4 px-6">
       <div className="flex items-center space-x-3">
         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-          position.profit >= 0 
+          position.profit >= 0
             ? (isDark ? 'bg-green-500/20' : 'bg-green-100')
             : (isDark ? 'bg-red-500/20' : 'bg-red-100')
         }`}>
           <span className={`font-bold text-sm ${
-            position.profit >= 0 
+            position.profit >= 0
               ? (isDark ? 'text-green-400' : 'text-green-600')
               : (isDark ? 'text-red-400' : 'text-red-600')
           }`}>
@@ -634,7 +634,7 @@ const EmptyPortfolio = React.memo(({ isDark }) => (
     </div>
     <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Портфель пуст</h4>
     <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
-      Начните инвестировать, чтобы увидеть свои позиции здесь. 
+      Начните инвестировать, чтобы увидеть свои позиции здесь.
       Используйте раздел "Торговля" для покупки акций.
     </p>
   </div>
