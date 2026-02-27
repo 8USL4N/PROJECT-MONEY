@@ -12,30 +12,39 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 fixed w-full top-0 z-50 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 fixed w-full top-0 z-50 transition-colors duration-300">
+      <div className="px-6">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-lg ${
+          {/* Левая часть - Логотип и название */}
+          <div className="flex items-center space-x-4">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               isDark 
                 ? 'bg-gradient-to-r from-green-400 to-cyan-500' 
-                : 'bg-gradient-to-r from-pink-500 to-blue-500'
-            } shadow-lg`}></div>
-            <h1 className="ml-3 text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
-              QuantumTrade
-            </h1>
+                : 'bg-gradient-to-r from-blue-500 to-purple-600'
+            } shadow-lg`}>
+              <span className="text-white font-bold text-lg">₿</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                УмныйТрейдер
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                AI-платформа для инвестиций
+              </p>
+            </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          {/* Правая часть - Пользователь и управление */}
+          <div className="flex items-center space-x-3">
             {/* Переключатель темы */}
             <button
               onClick={toggleTheme}
               className={`p-2 rounded-xl transition-all duration-300 ${
                 isDark 
                   ? 'bg-gray-700 text-cyan-400 hover:bg-gray-600' 
-                  : 'bg-gray-100 text-pink-500 hover:bg-gray-200'
+                  : 'bg-gray-100 text-blue-600 hover:bg-gray-200'
               } shadow-lg hover:shadow-xl transform hover:scale-110`}
-              title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+              title={isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'}
             >
               {isDark ? (
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -48,15 +57,17 @@ export default function Header() {
               )}
             </button>
 
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900 dark:text-white transition-colors duration-300">
-                {currentUser?.username}
+            {/* Информация о пользователе */}
+            <div className="text-right border-r border-gray-200 dark:border-gray-700 pr-3">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                {currentUser?.username || 'Трейдер'}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                {currentUser?.email}
+                {currentUser?.email || 'investor@example.com'}
               </p>
             </div>
             
+            {/* Кнопка выхода */}
             <button
               onClick={handleLogout}
               className={`px-4 py-2 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 ${
@@ -65,7 +76,7 @@ export default function Header() {
                   : 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700'
               }`}
             >
-              Logout
+              Выйти
             </button>
           </div>
         </div>

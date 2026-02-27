@@ -33,11 +33,11 @@ export default function LoginForm() {
       await login(formData.email, formData.password);
       navigate("/dashboard");
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Ошибка входа:', error);
       setError(
         error.response?.data?.detail ||
         error.message ||
-        "Login failed. Please check your credentials and try again."
+        "Ошибка входа. Пожалуйста, проверьте ваши учетные данные и попробуйте снова."
       );
     } finally {
       setLoading(false);
@@ -70,8 +70,8 @@ export default function LoginForm() {
           </div>
           <h1 className={`text-3xl font-bold mb-2 transition-colors duration-300 ${
             isDark ? 'text-white' : 'text-gray-800'
-          }`}>Welcome Back</h1>
-          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Sign in to your account to continue</p>
+          }`}>С возвращением</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Войдите в свой аккаунт чтобы продолжить</p>
           
           {process.env.NODE_ENV === 'development' && (
             <button
@@ -81,7 +81,7 @@ export default function LoginForm() {
                 isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'
               }`}
             >
-              Use Test Credentials
+              Использовать тестовые данные
             </button>
           )}
         </div>
@@ -108,7 +108,7 @@ export default function LoginForm() {
               <div className={`mt-2 text-xs transition-colors duration-300 ${
                 isDark ? 'text-red-400' : 'text-red-600'
               }`}>
-                Tip: Make sure your backend server is running on http://localhost:8000
+                Подсказка: Убедитесь, что сервер запущен на http://localhost:8000
               </div>
             </div>
           )}
@@ -128,7 +128,7 @@ export default function LoginForm() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="Enter your email"
+                  placeholder="Введите вашу почту"
                   required
                   className={`w-full pl-10 pr-4 py-3 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                     isDark
@@ -151,7 +151,7 @@ export default function LoginForm() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Enter your password"
+                  placeholder="Введите ваш пароль"
                   required
                   className={`w-full pl-10 pr-4 py-3 rounded-2xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                     isDark
@@ -174,24 +174,24 @@ export default function LoginForm() {
               {loading ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing In...
+                  Вход...
                 </div>
               ) : (
-                "Sign In"
+                "Войти"
               )}
             </button>
 
             <div className={`text-center text-sm pt-4 transition-colors duration-300 ${
               isDark ? 'text-gray-400' : 'text-gray-600'
             }`}>
-              Don't have an account?{" "}
+              Нет аккаунта?{" "}
               <Link
                 to="/register"
                 className={`font-semibold transition-colors duration-300 ${
                   isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'
                 }`}
               >
-                Sign up now
+                Зарегистрируйтесь сейчас
               </Link>
             </div>
           </form>

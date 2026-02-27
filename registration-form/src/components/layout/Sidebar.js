@@ -8,18 +8,18 @@ export default function Sidebar() {
   const { isDark } = useTheme();
 
   const menuItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/trading', label: 'Trading', icon: '💹' },
-    { path: '/portfolio', label: 'Portfolio', icon: '💰' },
-    { path: '/market', label: 'Market Data', icon: '📈' },
-    { path: '/models', label: 'AI Models', icon: '🤖' },
-    { path: '/backtest', label: 'Backtesting', icon: '🔍' },
-    { path: '/analytics', label: 'Analytics', icon: '📋' },
+    { path: '/dashboard', label: 'Панель управления', icon: '📊' },
+    { path: '/trading', label: 'Торговля', icon: '💹' },
+    { path: '/portfolio', label: 'Портфель', icon: '💰' },
+    { path: '/market', label: 'Рыночные данные', icon: '📈' },
+    { path: '/models', label: 'AI Модели', icon: '🤖' },
+    { path: '/backtest', label: 'Бэктестинг', icon: '🔍' },
+    { path: '/analytics', label: 'Аналитика', icon: '📋' },
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-lg fixed left-0 top-16 h-full w-64 border-r border-gray-200 dark:border-gray-700 transition-colors duration-300">
-      <nav className="mt-8">
+    <div className="bg-white dark:bg-gray-800 shadow-lg fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-gray-200 dark:border-gray-700 transition-colors duration-300 overflow-y-auto">
+      <nav className="mt-6">
         <ul className="space-y-2 px-4">
           {menuItems.map((item) => (
             <li key={item.path}>
@@ -29,7 +29,7 @@ export default function Sidebar() {
                   location.pathname === item.path
                     ? isDark
                       ? 'bg-gradient-to-r from-green-500 to-cyan-600 text-white shadow-lg transform -translate-y-0.5'
-                      : 'bg-gradient-to-r from-pink-500 to-blue-500 text-white shadow-lg transform -translate-y-0.5'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform -translate-y-0.5'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md'
                 }`}
               >
@@ -41,21 +41,38 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* Quick Stats */}
-      <div className="absolute bottom-6 left-4 right-4">
-        <div className={`rounded-2xl p-4 border backdrop-blur-sm transition-all duration-300 ${
+      {/* Панель статуса */}
+      <div className="absolute bottom-4 left-4 right-4">
+        <div className={`rounded-2xl p-4 border transition-all duration-300 ${
           isDark
             ? 'bg-gradient-to-br from-gray-700 to-gray-800 border-gray-600'
             : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200'
         }`}>
-          <p className={`text-sm font-medium ${
-            isDark ? 'text-gray-200' : 'text-gray-700'
-          }`}>Trading Status</p>
-          <div className="flex items-center mt-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-            <span className={`text-xs ${
-              isDark ? 'text-gray-400' : 'text-gray-600'
-            }`}>Connected</span>
+          <div className="flex justify-between items-center mb-2">
+            <p className={`text-sm font-semibold ${
+              isDark ? 'text-gray-200' : 'text-gray-700'
+            }`}>Статус системы</p>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+              <span className={`text-xs font-medium ${
+                isDark ? 'text-green-400' : 'text-green-600'
+              }`}>Активно</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className={`text-center rounded-lg py-1 ${
+              isDark ? 'bg-gray-600' : 'bg-gray-200'
+            }`}>
+              <div className={isDark ? 'text-gray-300' : 'text-gray-600'}>Модели</div>
+              <div className="font-bold text-green-600 dark:text-green-400">3/3</div>
+            </div>
+            <div className={`text-center rounded-lg py-1 ${
+              isDark ? 'bg-gray-600' : 'bg-gray-200'
+            }`}>
+              <div className={isDark ? 'text-gray-300' : 'text-gray-600'}>API</div>
+              <div className="font-bold text-green-600 dark:text-green-400">Online</div>
+            </div>
           </div>
         </div>
       </div>
